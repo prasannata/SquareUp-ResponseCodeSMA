@@ -1,0 +1,71 @@
+Given the REST API defined below, write a Rack middleware, Java servlet, or equivalent proxy to log the moving average and variance of the response status codes grouped by their class (2xx, 4xx, etc).
+ 
+  - PUT /locations/:location_id
+  - GET /locations/:location_id
+  - DELETE /locations/:location_id
+ 
+Assume the service is only available over HTTPS and that the API returns standard HTTP status codes, i.e., 5xx for internal server errors, 4xx for client request errors, 2xx for success, and 3xx for redirection. Bonus points: implementing the API in question, and adding authentication to the API.
+
+Source: https://squareup.com/jobs/ohExVfw7
+
+
+Requirements
+------------
+
+JRE 1.6 or greater
+Maven 2.2.1 or greater
+
+Maven Repositories
+------------------
+
+For this code to build and run successfully, you need to have access to a maven repository containing the following dependencies:
+
+1) javax.servlet-api, version 3.0.1
+
+and following maven plugins:
+
+1) maven-compiler-plugin, version: 2.3.2
+2) maven-war-plugin, version: 2.1-beta-1
+3) jetty-maven-plugin, version: 8.1.1.v20120215
+
+Building & Running
+------------------
+
+tar zxvf square-challenge.tar.gz
+cd square-challenge
+
+To build and start the web server:
+
+mvn clean jetty:run
+
+Testing
+-------
+
+Once the server is up and running, any environment that has bash and curl can be used to run test.sh
+
+Simple Moving average and variance calcuation
+---------------------------------------------
+
+SMA is calculated with a recording interval of every 10 responses and with a sample size of 5 as follows:
+
+a) For every 10 requests, number of response codes for each response class is recorded.
+b) After the number of recordings for each response class has reached 5, the SMA is calculated and logged continuously every 10 requests thereon.
+
+Effectively, to hava SMA calculated a miniumum of 50 responses from the server are required.
+
+For example, consider there are 10 2xx responses in first 10 requests, 8 in next 10, 10 in next 10, 5 in next 10 and 0 in next 10.
+
+SMA = (10 + 8 + 10 + 5 + 0) / 10 = 3.3 2xx responses every 10 requests in last 50 requests 
+
+now lets say in next 10 there are 7 2xx responses, so the new SMA will be calculated as
+
+SMA = SMA - (oldestRecording/10) + (newRecording/10) 
+
+So in our example SMA at completion of 60th response = 3.3 - (10/10) + (7/10) = 3 2xx responses every 10 requests in last 50 requests
+
+Variance is calculated as summation of square of difference of last 5 recorded values from the last calculated SMA by the sample size (=5)
+
+Not supported
+-------------
+HTTPS
+
